@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Buildings from './pages/Buildings'
+import BuildingDetail from './pages/BuildingDetail'
 import ComplianceMap from './pages/ComplianceMap'
 import AboutLL97 from './pages/AboutLL97'
 
@@ -9,6 +10,7 @@ function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/buildings" element={<Buildings />} />
+      <Route path="/buildings/:id" element={<BuildingDetail />} />
       <Route path="/map" element={<ComplianceMap />} />
       <Route path="/about-ll97" element={<AboutLL97 />} />
     </Routes>
