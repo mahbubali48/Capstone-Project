@@ -3,19 +3,19 @@ import { Link } from 'react-router-dom'
 function Navbar() {
   return (
     <header className="bg-[#006B3C] text-white">
-      <div className="mx-auto max-w-7xl px-6 py-4">
-        <div className="flex items-center justify-between">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide">
+            <p className="text-xs font-semibold uppercase tracking-wide sm:text-sm">
               NYC Building Emissions
             </p>
 
-            <h1 className="text-xl font-bold">
+            <h1 className="text-lg font-bold sm:text-xl">
               Local Law 97 Compliance Dashboard
             </h1>
           </div>
 
-          <nav className="flex items-center gap-6 text-sm font-semibold">
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 text-sm font-semibold">
             <Link to="/" className="hover:text-blue-200">
               Home
             </Link>
