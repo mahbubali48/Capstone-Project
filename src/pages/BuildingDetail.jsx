@@ -1,42 +1,39 @@
 import { Link, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-
-const mockBuildingData = {
-  1: {
-    address: '350 5th Ave',
-    borough: 'Manhattan',
-    bin: '1015862',
-    bbl: '1008350041',
-    buildingType: 'Office',
-    squareFeet: '2,250,000',
-    emissions: 8420,
-    limit: 7500,
-    projected2030Limit: 6100,
-    status: 'At Risk',
-    projected2030Status: 'At Risk',
-    projectedPenalty: '$241,000',
-  },
-  2: {
-    address: '30 Rockefeller Plaza',
-    borough: 'Manhattan',
-    bin: '1033423',
-    bbl: '1012660001',
-    buildingType: 'Office',
-    squareFeet: '2,900,000',
-    emissions: 5780,
-    limit: 6200,
-    projected2030Limit: 5200,
-    status: 'Compliant',
-    projected2030Status: 'At Risk',
-    projectedPenalty: '$0',
-  },
-}
+import { getBuildingById } from '../data/mockBuildings'
 
 function BuildingDetail() {
   const { id } = useParams()
 
-  const building = mockBuildingData[id] || mockBuildingData[1]
+  const building = getBuildingById(id)
+
+  if (!building) {
+    return (
+      <div className="min-h-screen bg-white text-black">
+        <Navbar />
+
+        <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+          <p className="text-sm font-bold uppercase tracking-wider text-[#0068A8]">
+            Building Not Found
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
+            We could not find this building.
+          </h1>
+
+          <Link
+            to="/buildings"
+            className="mt-6 inline-block font-bold text-[#0068A8] hover:underline"
+          >
+            ← Back to Buildings
+          </Link>
+        </main>
+
+        <Footer />
+      </div>
+    )
+  }
 
   const currentDifference = building.emissions - building.limit
   const isOverCurrentLimit = currentDifference > 0
@@ -65,21 +62,26 @@ function BuildingDetail() {
   const statusStyle =
     building.status === 'Compliant'
       ? 'bg-green-100 text-green-800'
-      : 'bg-red-100 text-red-800'
+      : building.status === 'At Risk'
+        ? 'bg-red-100 text-red-800'
+        : 'bg-yellow-100 text-yellow-800'
 
   const projectedStatusStyle =
     building.projected2030Status === 'Compliant'
       ? 'bg-green-100 text-green-800'
       : 'bg-red-100 text-red-800'
 
+  const maxHistoricalEmissions = Math.max(
+    ...building.historicalEmissions.map((item) => item.emissions),
+  )
+
   return (
     <div className="min-h-screen bg-white text-black">
       <Navbar />
 
       <main>
-        {/* Header */}
         <section className="border-b border-gray-200 bg-[#F7F8F6]">
-          <div className="mx-auto max-w-7xl px-6 py-10">
+          <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
             <Link
               to="/buildings"
               className="text-sm font-bold text-[#0068A8] hover:underline"
@@ -93,11 +95,11 @@ function BuildingDetail() {
 
             <div className="mt-2 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h1 className="text-4xl font-bold text-black">
+                <h1 className="text-3xl font-bold text-black sm:text-4xl">
                   {building.address}
                 </h1>
 
-                <p className="mt-2 text-gray-700">
+                <p className="mt-2 break-words text-sm leading-6 text-gray-700 sm:text-base">
                   {building.borough} · BIN {building.bin} · BBL {building.bbl}
                 </p>
               </div>
@@ -111,15 +113,15 @@ function BuildingDetail() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-6 py-12">
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
           {/* Summary Cards */}
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
             <div className="border border-gray-300 p-5">
               <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
                 Building Type
               </p>
 
-              <p className="mt-2 text-2xl font-bold">
+              <p className="mt-2 text-xl font-bold sm:text-2xl">
                 {building.buildingType}
               </p>
             </div>
@@ -129,8 +131,8 @@ function BuildingDetail() {
                 Gross Floor Area
               </p>
 
-              <p className="mt-2 text-2xl font-bold">
-                {building.squareFeet} sq ft
+              <p className="mt-2 text-xl font-bold sm:text-2xl">
+                {building.squareFeet.toLocaleString()} sq ft
               </p>
             </div>
 
@@ -139,7 +141,7 @@ function BuildingDetail() {
                 Current Emissions
               </p>
 
-              <p className="mt-2 text-2xl font-bold">
+              <p className="mt-2 text-xl font-bold sm:text-2xl">
                 {building.emissions.toLocaleString()} tCO₂e
               </p>
             </div>
@@ -149,19 +151,19 @@ function BuildingDetail() {
                 Projected Penalty
               </p>
 
-              <p className="mt-2 text-2xl font-bold">
+              <p className="mt-2 text-xl font-bold sm:text-2xl">
                 {building.projectedPenalty}
               </p>
             </div>
           </div>
 
           {/* Compliance Gap */}
-          <div className="mt-10 border-l-4 border-[#006B3C] bg-[#F7F8F6] p-6">
+          <div className="mt-8 border-l-4 border-[#006B3C] bg-[#F7F8F6] p-5 sm:mt-10 sm:p-6">
             <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
               Compliance Gap
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold">
+            <h2 className="mt-2 text-xl font-bold sm:text-2xl">
               Reduction Needed to Meet Emissions Limits
             </h2>
 
@@ -171,11 +173,11 @@ function BuildingDetail() {
                   Current limit reduction
                 </p>
 
-                <p className="mt-1 text-3xl font-bold text-black">
+                <p className="mt-1 text-2xl font-bold sm:text-3xl">
                   {requiredCurrentReduction.toLocaleString()} tCO₂e
                 </p>
 
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm leading-6 text-gray-600">
                   Required to meet the current emissions limit.
                 </p>
               </div>
@@ -185,11 +187,11 @@ function BuildingDetail() {
                   2030 reduction needed
                 </p>
 
-                <p className="mt-1 text-3xl font-bold text-black">
+                <p className="mt-1 text-2xl font-bold sm:text-3xl">
                   {required2030Reduction.toLocaleString()} tCO₂e
                 </p>
 
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm leading-6 text-gray-600">
                   Additional reduction required to meet the 2030 limit.
                 </p>
               </div>
@@ -199,50 +201,46 @@ function BuildingDetail() {
                   Reduction from current emissions
                 </p>
 
-                <p className="mt-1 text-3xl font-bold text-[#006B3C]">
+                <p className="mt-1 text-2xl font-bold text-[#006B3C] sm:text-3xl">
                   {reductionPercent2030}%
                 </p>
 
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm leading-6 text-gray-600">
                   Approximate reduction needed to reach the 2030 threshold.
                 </p>
               </div>
             </div>
           </div>
 
-          {/* Compliance */}
-          <div className="mt-10 grid gap-8 lg:grid-cols-2">
-            <div className="border border-gray-300 p-6">
+          {/* Compliance Panels */}
+          <div className="mt-8 grid gap-6 lg:mt-10 lg:grid-cols-2 lg:gap-8">
+            <div className="border border-gray-300 p-5 sm:p-6">
               <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
                 Compliance
               </p>
 
-              <h2 className="mt-2 text-2xl font-bold">
+              <h2 className="mt-2 text-xl font-bold sm:text-2xl">
                 Current LL97 Performance
               </h2>
 
               <div className="mt-6 space-y-5">
-                <div className="flex justify-between border-b border-gray-200 pb-4">
-                  <span className="text-gray-600">
-                    Current emissions
-                  </span>
+                <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-gray-600">Current emissions</span>
 
                   <span className="font-bold">
                     {building.emissions.toLocaleString()} tCO₂e
                   </span>
                 </div>
 
-                <div className="flex justify-between border-b border-gray-200 pb-4">
-                  <span className="text-gray-600">
-                    Applicable limit
-                  </span>
+                <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-gray-600">Applicable limit</span>
 
                   <span className="font-bold">
                     {building.limit.toLocaleString()} tCO₂e
                   </span>
                 </div>
 
-                <div className="flex justify-between border-b border-gray-200 pb-4">
+                <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-gray-600">
                     Amount {isOverCurrentLimit ? 'over' : 'under'} limit
                   </span>
@@ -258,30 +256,25 @@ function BuildingDetail() {
                   </span>
                 </div>
 
-                <div className="flex justify-between">
-                  <span className="text-gray-600">
-                    Compliance status
-                  </span>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-gray-600">Compliance status</span>
 
-                  <span className="font-bold">
-                    {building.status}
-                  </span>
+                  <span className="font-bold">{building.status}</span>
                 </div>
               </div>
             </div>
 
-            {/* 2030 Outlook */}
-            <div className="border border-gray-300 p-6">
+            <div className="border border-gray-300 p-5 sm:p-6">
               <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
                 2030 Outlook
               </p>
 
-              <h2 className="mt-2 text-2xl font-bold">
+              <h2 className="mt-2 text-xl font-bold sm:text-2xl">
                 Projected Compliance
               </h2>
 
               <div className="mt-6 space-y-5">
-                <div className="flex justify-between border-b border-gray-200 pb-4">
+                <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-gray-600">
                     Projected 2030 limit
                   </span>
@@ -291,9 +284,9 @@ function BuildingDetail() {
                   </span>
                 </div>
 
-                <div className="flex justify-between border-b border-gray-200 pb-4">
+                <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-gray-600">
-                    Amount over 2030 limit
+                    Amount {isOver2030Limit ? 'over' : 'under'} 2030 limit
                   </span>
 
                   <span
@@ -307,13 +300,11 @@ function BuildingDetail() {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600">
-                    Projected status
-                  </span>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-gray-600">Projected status</span>
 
                   <span
-                    className={`px-3 py-1 text-xs font-bold ${projectedStatusStyle}`}
+                    className={`w-fit px-3 py-1 text-xs font-bold ${projectedStatusStyle}`}
                   >
                     {building.projected2030Status}
                   </span>
@@ -323,68 +314,82 @@ function BuildingDetail() {
           </div>
 
           {/* Emissions Trend */}
-          <div className="mt-10 border border-gray-300 p-6">
+          <div className="mt-8 border border-gray-300 p-5 sm:mt-10 sm:p-6">
             <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
               Emissions Trend
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold">
+            <h2 className="mt-2 text-xl font-bold sm:text-2xl">
               Historical Emissions
             </h2>
 
-            <p className="mt-3 text-sm text-gray-600">
-              Historical building emissions will be displayed here once yearly
-              benchmarking data is connected.
+            <p className="mt-3 text-sm leading-6 text-gray-600">
+              Historical emissions data is currently shown using prototype
+              values until benchmarking data is connected.
             </p>
 
-            <div className="mt-6 border border-dashed border-gray-400 bg-[#F7F8F6] p-6">
-              <div className="flex h-56 items-end justify-between gap-4 border-b border-l border-gray-400 px-6 pb-5">
-                <div className="flex h-full flex-1 items-end justify-around gap-3">
-                  <div className="h-[45%] w-12 bg-gray-300"></div>
-                  <div className="h-[60%] w-12 bg-gray-300"></div>
-                  <div className="h-[52%] w-12 bg-gray-300"></div>
-                  <div className="h-[70%] w-12 bg-gray-300"></div>
-                  <div className="h-[64%] w-12 bg-gray-300"></div>
+            <div className="mt-6 w-full border border-dashed border-gray-400 bg-[#F7F8F6] p-3 sm:p-6">
+              <div className="flex h-52 w-full items-end border-b border-l border-gray-400 px-2 pb-4 sm:h-56 sm:px-4">
+                <div className="flex h-full w-full items-end justify-between gap-2">
+                  {building.historicalEmissions.map((record) => {
+                    const height =
+                      (record.emissions / maxHistoricalEmissions) * 85
+
+                    return (
+                      <div
+                        key={record.year}
+                        className="flex h-full min-w-0 flex-1 flex-col items-center justify-end"
+                      >
+                        <div
+                          className="w-5 max-w-10 bg-gray-300 sm:w-10"
+                          style={{ height: `${height}%` }}
+                        />
+                      </div>
+                    )
+                  })}
                 </div>
               </div>
 
-              <div className="mt-3 flex justify-around pl-6 text-xs text-gray-500">
-                <span>2020</span>
-                <span>2021</span>
-                <span>2022</span>
-                <span>2023</span>
-                <span>2024</span>
+              <div className="mt-3 flex w-full justify-between px-1 text-[10px] text-gray-500 sm:px-4 sm:text-xs">
+                {building.historicalEmissions.map((record) => (
+                  <span
+                    key={record.year}
+                    className="flex-1 text-center"
+                  >
+                    {record.year}
+                  </span>
+                ))}
               </div>
 
-              <p className="mt-4 text-center text-xs text-gray-500">
-                Placeholder visualization — not real emissions data
+              <p className="mt-4 text-center text-xs leading-5 text-gray-500">
+                Prototype visualization — not real emissions data
               </p>
             </div>
           </div>
 
           {/* Retrofit Recommendations */}
-          <div className="mt-10 border border-gray-300 p-6">
+          <div className="mt-8 border border-gray-300 p-5 sm:mt-10 sm:p-6">
             <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
               Retrofit Planning
             </p>
 
-            <h2 className="mt-2 text-2xl font-bold">
+            <h2 className="mt-2 text-xl font-bold sm:text-2xl">
               Recommended Upgrades
             </h2>
 
-            <p className="mt-3 max-w-3xl text-gray-700">
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-700 sm:text-base">
               Cost-efficient retrofit recommendations will be displayed here
               once the optimization engine and backend data are connected.
             </p>
 
             <div className="mt-6 grid gap-5 md:grid-cols-3">
               <div className="border border-gray-200 p-5">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <h3 className="font-bold text-[#0068A8]">
                     HVAC Improvements
                   </h3>
 
-                  <span className="bg-red-100 px-2 py-1 text-xs font-bold text-red-800">
+                  <span className="w-fit bg-red-100 px-2 py-1 text-xs font-bold text-red-800">
                     High Priority
                   </span>
                 </div>
@@ -405,12 +410,12 @@ function BuildingDetail() {
               </div>
 
               <div className="border border-gray-200 p-5">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <h3 className="font-bold text-[#0068A8]">
                     Building Envelope
                   </h3>
 
-                  <span className="bg-yellow-100 px-2 py-1 text-xs font-bold text-yellow-800">
+                  <span className="w-fit bg-yellow-100 px-2 py-1 text-xs font-bold text-yellow-800">
                     Medium Priority
                   </span>
                 </div>
@@ -431,12 +436,12 @@ function BuildingDetail() {
               </div>
 
               <div className="border border-gray-200 p-5">
-                <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <h3 className="font-bold text-[#0068A8]">
                     Electrification
                   </h3>
 
-                  <span className="bg-yellow-100 px-2 py-1 text-xs font-bold text-yellow-800">
+                  <span className="w-fit bg-yellow-100 px-2 py-1 text-xs font-bold text-yellow-800">
                     Medium Priority
                   </span>
                 </div>
@@ -459,7 +464,7 @@ function BuildingDetail() {
             </div>
           </div>
 
-          <p className="mt-5 text-xs text-gray-500">
+          <p className="mt-5 text-xs leading-5 text-gray-500">
             Prototype data shown for frontend development. Values and
             recommendations will be replaced with backend data during
             integration.

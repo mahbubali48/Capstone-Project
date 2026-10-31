@@ -2,54 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-
-const mockBuildings = [
-  {
-    id: 1,
-    address: '350 5th Ave',
-    borough: 'Manhattan',
-    bin: '1015862',
-    bbl: '1008350041',
-    emissions: '8,420',
-    status: 'At Risk',
-  },
-  {
-    id: 2,
-    address: '30 Rockefeller Plaza',
-    borough: 'Manhattan',
-    bin: '1033423',
-    bbl: '1012660001',
-    emissions: '5,780',
-    status: 'Compliant',
-  },
-  {
-    id: 3,
-    address: '1 Metrotech Center',
-    borough: 'Brooklyn',
-    bin: '3253481',
-    bbl: '3020580001',
-    emissions: '6,310',
-    status: 'At Risk',
-  },
-  {
-    id: 4,
-    address: '120-55 Queens Blvd',
-    borough: 'Queens',
-    bin: '4071001',
-    bbl: '4033000001',
-    emissions: '3,940',
-    status: 'Compliant',
-  },
-  {
-    id: 5,
-    address: '851 Grand Concourse',
-    borough: 'Bronx',
-    bin: '2002874',
-    bbl: '2024610001',
-    emissions: '4,870',
-    status: 'Needs Review',
-  },
-]
+import { mockBuildings } from '../data/mockBuildings'
 
 function Buildings() {
   const [search, setSearch] = useState('')
@@ -58,10 +11,12 @@ function Buildings() {
 
   const filteredBuildings = useMemo(() => {
     return mockBuildings.filter((building) => {
+      const normalizedSearch = search.trim().toLowerCase()
+
       const matchesSearch =
-        building.address.toLowerCase().includes(search.toLowerCase()) ||
-        building.bin.includes(search) ||
-        building.bbl.includes(search)
+        building.address.toLowerCase().includes(normalizedSearch) ||
+        building.bin.includes(search.trim()) ||
+        building.bbl.includes(search.trim())
 
       const matchesBorough =
         borough === 'All' || building.borough === borough
@@ -90,18 +45,17 @@ function Buildings() {
       <Navbar />
 
       <main>
-        {/* Page Header */}
         <section className="border-b border-gray-200 bg-[#F7F8F6]">
-          <div className="mx-auto max-w-7xl px-6 py-12">
+          <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-12">
             <p className="text-sm font-bold uppercase tracking-wider text-[#0068A8]">
               Building Directory
             </p>
 
-            <h1 className="mt-2 text-4xl font-bold text-black">
+            <h1 className="mt-2 text-3xl font-bold text-black sm:text-4xl">
               Explore Covered Buildings
             </h1>
 
-            <p className="mt-4 max-w-3xl text-base leading-7 text-gray-700">
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-gray-700 sm:text-base">
               Search and filter buildings affected by Local Law 97 to review
               building identifiers, emissions information, and current
               compliance status.
@@ -109,9 +63,8 @@ function Buildings() {
           </div>
         </section>
 
-        {/* Search + Filters */}
-        <section className="mx-auto max-w-7xl px-6 py-10">
-          <div className="border border-gray-300 bg-white p-6">
+        <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-10">
+          <div className="border border-gray-300 bg-white p-4 sm:p-6">
             <div className="grid gap-5 lg:grid-cols-[2fr_1fr_1fr]">
               <div>
                 <label
@@ -177,8 +130,7 @@ function Buildings() {
             </div>
           </div>
 
-          {/* Table Header */}
-          <div className="mt-10 flex items-end justify-between gap-4">
+          <div className="mt-8 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-sm font-bold uppercase tracking-wider text-[#0068A8]">
                 Results
@@ -195,8 +147,68 @@ function Buildings() {
             </p>
           </div>
 
-          {/* Building Table */}
-          <div className="mt-5 overflow-x-auto border border-gray-300">
+          {/* Mobile Cards */}
+          <div className="mt-5 space-y-4 md:hidden">
+            {filteredBuildings.map((building) => (
+              <article
+                key={building.id}
+                className="border border-gray-300 bg-white p-5"
+              >
+                <div className="flex flex-col gap-3">
+                  <div>
+                    <p className="text-lg font-bold text-black">
+                      {building.address}
+                    </p>
+
+                    <p className="mt-1 text-sm text-gray-600">
+                      {building.borough}
+                    </p>
+                  </div>
+
+                  <span
+                    className={`inline-block w-fit px-3 py-1 text-xs font-bold ${getStatusStyle(
+                      building.status,
+                    )}`}
+                  >
+                    {building.status}
+                  </span>
+                </div>
+
+                <dl className="mt-5 space-y-3 text-sm">
+                  <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-3">
+                    <dt className="text-gray-600">BIN</dt>
+                    <dd className="text-right font-semibold">
+                      {building.bin}
+                    </dd>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-3">
+                    <dt className="text-gray-600">BBL</dt>
+                    <dd className="text-right font-semibold">
+                      {building.bbl}
+                    </dd>
+                  </div>
+
+                  <div className="flex items-start justify-between gap-4">
+                    <dt className="text-gray-600">Emissions</dt>
+                    <dd className="text-right font-semibold">
+                      {building.emissions.toLocaleString()} tCO₂e
+                    </dd>
+                  </div>
+                </dl>
+
+                <Link
+                  to={`/buildings/${building.id}`}
+                  className="mt-5 block border border-[#0068A8] px-4 py-3 text-center text-sm font-bold text-[#0068A8] transition hover:bg-[#0068A8] hover:text-white"
+                >
+                  View Building →
+                </Link>
+              </article>
+            ))}
+          </div>
+
+          {/* Desktop Table */}
+          <div className="mt-5 hidden overflow-x-auto border border-gray-300 md:block">
             <table className="min-w-full border-collapse">
               <thead className="bg-[#006B3C] text-left text-white">
                 <tr>
@@ -220,7 +232,7 @@ function Buildings() {
                     key={building.id}
                     className="border-t border-gray-200 hover:bg-[#F7F8F6]"
                   >
-                    <td className="px-5 py-5 font-semibold text-black">
+                    <td className="whitespace-nowrap px-5 py-5 font-semibold text-black">
                       {building.address}
                     </td>
 
@@ -236,13 +248,13 @@ function Buildings() {
                       {building.bbl}
                     </td>
 
-                    <td className="px-5 py-5 text-sm text-gray-700">
-                      {building.emissions} tCO₂e
+                    <td className="whitespace-nowrap px-5 py-5 text-sm text-gray-700">
+                      {building.emissions.toLocaleString()} tCO₂e
                     </td>
 
                     <td className="px-5 py-5">
                       <span
-                        className={`inline-block px-3 py-1 text-xs font-bold ${getStatusStyle(
+                        className={`inline-block whitespace-nowrap px-3 py-1 text-xs font-bold ${getStatusStyle(
                           building.status,
                         )}`}
                       >
@@ -250,7 +262,7 @@ function Buildings() {
                       </span>
                     </td>
 
-                    <td className="px-5 py-5 text-right">
+                    <td className="whitespace-nowrap px-5 py-5 text-right">
                       <Link
                         to={`/buildings/${building.id}`}
                         className="text-sm font-bold text-[#0068A8] hover:underline"
@@ -262,19 +274,19 @@ function Buildings() {
                 ))}
               </tbody>
             </table>
-
-            {filteredBuildings.length === 0 && (
-              <div className="px-6 py-12 text-center">
-                <p className="font-bold text-black">No buildings found</p>
-
-                <p className="mt-2 text-sm text-gray-600">
-                  Try changing your search or filter options.
-                </p>
-              </div>
-            )}
           </div>
 
-          <p className="mt-4 text-xs text-gray-500">
+          {filteredBuildings.length === 0 && (
+            <div className="mt-5 border border-gray-300 px-6 py-12 text-center">
+              <p className="font-bold text-black">No buildings found</p>
+
+              <p className="mt-2 text-sm text-gray-600">
+                Try changing your search or filter options.
+              </p>
+            </div>
+          )}
+
+          <p className="mt-4 text-xs leading-5 text-gray-500">
             Prototype data shown for frontend development. Building records will
             be replaced with project database data during backend integration.
           </p>
