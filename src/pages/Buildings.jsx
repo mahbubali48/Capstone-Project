@@ -1,16 +1,38 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { mockBuildings } from '../data/mockBuildings'
+import { getBuildings } from '../services/buildingService'
 
 function Buildings() {
+  const [buildings, setBuildings] = useState([])
   const [search, setSearch] = useState('')
   const [borough, setBorough] = useState('All')
   const [status, setStatus] = useState('All')
 
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    async function loadBuildings() {
+      try {
+        setLoading(true)
+        setError('')
+
+        const data = await getBuildings()
+        setBuildings(data)
+      } catch {
+        setError('Unable to load building data.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadBuildings()
+  }, [])
+
   const filteredBuildings = useMemo(() => {
-    return mockBuildings.filter((building) => {
+    return buildings.filter((building) => {
       const normalizedSearch = search.trim().toLowerCase()
 
       const matchesSearch =
@@ -26,7 +48,7 @@ function Buildings() {
 
       return matchesSearch && matchesBorough && matchesStatus
     })
-  }, [search, borough, status])
+  }, [buildings, search, borough, status])
 
   const getStatusStyle = (buildingStatus) => {
     if (buildingStatus === 'Compliant') {
@@ -141,149 +163,172 @@ function Buildings() {
               </h2>
             </div>
 
-            <p className="text-sm text-gray-600">
-              {filteredBuildings.length} building
-              {filteredBuildings.length !== 1 ? 's' : ''} shown
-            </p>
+            {!loading && !error && (
+              <p className="text-sm text-gray-600">
+                {filteredBuildings.length} building
+                {filteredBuildings.length !== 1 ? 's' : ''} shown
+              </p>
+            )}
           </div>
 
-          {/* Mobile Cards */}
-          <div className="mt-5 space-y-4 md:hidden">
-            {filteredBuildings.map((building) => (
-              <article
-                key={building.id}
-                className="border border-gray-300 bg-white p-5"
-              >
-                <div className="flex flex-col gap-3">
-                  <div>
-                    <p className="text-lg font-bold text-black">
-                      {building.address}
-                    </p>
+          {loading && (
+            <div className="mt-5 border border-gray-300 bg-[#F7F8F6] px-6 py-12 text-center">
+              <p className="font-bold text-black">Loading buildings...</p>
+              <p className="mt-2 text-sm text-gray-600">
+                Retrieving building information.
+              </p>
+            </div>
+          )}
 
-                    <p className="mt-1 text-sm text-gray-600">
-                      {building.borough}
-                    </p>
-                  </div>
+          {!loading && error && (
+            <div className="mt-5 border-l-4 border-red-700 bg-red-50 px-6 py-6">
+              <p className="font-bold text-red-800">
+                Building data could not be loaded
+              </p>
 
-                  <span
-                    className={`inline-block w-fit px-3 py-1 text-xs font-bold ${getStatusStyle(
-                      building.status,
-                    )}`}
-                  >
-                    {building.status}
-                  </span>
-                </div>
+              <p className="mt-2 text-sm text-red-700">{error}</p>
+            </div>
+          )}
 
-                <dl className="mt-5 space-y-3 text-sm">
-                  <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-3">
-                    <dt className="text-gray-600">BIN</dt>
-                    <dd className="text-right font-semibold">
-                      {building.bin}
-                    </dd>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-3">
-                    <dt className="text-gray-600">BBL</dt>
-                    <dd className="text-right font-semibold">
-                      {building.bbl}
-                    </dd>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-4">
-                    <dt className="text-gray-600">Emissions</dt>
-                    <dd className="text-right font-semibold">
-                      {building.emissions.toLocaleString()} tCO₂e
-                    </dd>
-                  </div>
-                </dl>
-
-                <Link
-                  to={`/buildings/${building.id}`}
-                  className="mt-5 block border border-[#0068A8] px-4 py-3 text-center text-sm font-bold text-[#0068A8] transition hover:bg-[#0068A8] hover:text-white"
-                >
-                  View Building →
-                </Link>
-              </article>
-            ))}
-          </div>
-
-          {/* Desktop Table */}
-          <div className="mt-5 hidden overflow-x-auto border border-gray-300 md:block">
-            <table className="min-w-full border-collapse">
-              <thead className="bg-[#006B3C] text-left text-white">
-                <tr>
-                  <th className="px-5 py-4 text-sm font-bold">Address</th>
-                  <th className="px-5 py-4 text-sm font-bold">Borough</th>
-                  <th className="px-5 py-4 text-sm font-bold">BIN</th>
-                  <th className="px-5 py-4 text-sm font-bold">BBL</th>
-                  <th className="px-5 py-4 text-sm font-bold">
-                    Emissions
-                  </th>
-                  <th className="px-5 py-4 text-sm font-bold">
-                    Compliance
-                  </th>
-                  <th className="px-5 py-4 text-sm font-bold"></th>
-                </tr>
-              </thead>
-
-              <tbody>
+          {!loading && !error && (
+            <>
+              <div className="mt-5 space-y-4 md:hidden">
                 {filteredBuildings.map((building) => (
-                  <tr
+                  <article
                     key={building.id}
-                    className="border-t border-gray-200 hover:bg-[#F7F8F6]"
+                    className="border border-gray-300 bg-white p-5"
                   >
-                    <td className="whitespace-nowrap px-5 py-5 font-semibold text-black">
-                      {building.address}
-                    </td>
+                    <div className="flex flex-col gap-3">
+                      <div>
+                        <p className="text-lg font-bold text-black">
+                          {building.address}
+                        </p>
 
-                    <td className="px-5 py-5 text-sm text-gray-700">
-                      {building.borough}
-                    </td>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {building.borough}
+                        </p>
+                      </div>
 
-                    <td className="px-5 py-5 text-sm text-gray-700">
-                      {building.bin}
-                    </td>
-
-                    <td className="px-5 py-5 text-sm text-gray-700">
-                      {building.bbl}
-                    </td>
-
-                    <td className="whitespace-nowrap px-5 py-5 text-sm text-gray-700">
-                      {building.emissions.toLocaleString()} tCO₂e
-                    </td>
-
-                    <td className="px-5 py-5">
                       <span
-                        className={`inline-block whitespace-nowrap px-3 py-1 text-xs font-bold ${getStatusStyle(
+                        className={`inline-block w-fit px-3 py-1 text-xs font-bold ${getStatusStyle(
                           building.status,
                         )}`}
                       >
                         {building.status}
                       </span>
-                    </td>
+                    </div>
 
-                    <td className="whitespace-nowrap px-5 py-5 text-right">
-                      <Link
-                        to={`/buildings/${building.id}`}
-                        className="text-sm font-bold text-[#0068A8] hover:underline"
-                      >
-                        View Building →
-                      </Link>
-                    </td>
-                  </tr>
+                    <dl className="mt-5 space-y-3 text-sm">
+                      <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-3">
+                        <dt className="text-gray-600">BIN</dt>
+                        <dd className="text-right font-semibold">
+                          {building.bin}
+                        </dd>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-4 border-b border-gray-200 pb-3">
+                        <dt className="text-gray-600">BBL</dt>
+                        <dd className="text-right font-semibold">
+                          {building.bbl}
+                        </dd>
+                      </div>
+
+                      <div className="flex items-start justify-between gap-4">
+                        <dt className="text-gray-600">Emissions</dt>
+                        <dd className="text-right font-semibold">
+                          {building.emissions.toLocaleString()} tCO₂e
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <Link
+                      to={`/buildings/${building.id}`}
+                      className="mt-5 block border border-[#0068A8] px-4 py-3 text-center text-sm font-bold text-[#0068A8] transition hover:bg-[#0068A8] hover:text-white"
+                    >
+                      View Building →
+                    </Link>
+                  </article>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </div>
 
-          {filteredBuildings.length === 0 && (
-            <div className="mt-5 border border-gray-300 px-6 py-12 text-center">
-              <p className="font-bold text-black">No buildings found</p>
+              <div className="mt-5 hidden overflow-x-auto border border-gray-300 md:block">
+                <table className="min-w-full border-collapse">
+                  <thead className="bg-[#006B3C] text-left text-white">
+                    <tr>
+                      <th className="px-5 py-4 text-sm font-bold">Address</th>
+                      <th className="px-5 py-4 text-sm font-bold">Borough</th>
+                      <th className="px-5 py-4 text-sm font-bold">BIN</th>
+                      <th className="px-5 py-4 text-sm font-bold">BBL</th>
+                      <th className="px-5 py-4 text-sm font-bold">
+                        Emissions
+                      </th>
+                      <th className="px-5 py-4 text-sm font-bold">
+                        Compliance
+                      </th>
+                      <th className="px-5 py-4 text-sm font-bold"></th>
+                    </tr>
+                  </thead>
 
-              <p className="mt-2 text-sm text-gray-600">
-                Try changing your search or filter options.
-              </p>
-            </div>
+                  <tbody>
+                    {filteredBuildings.map((building) => (
+                      <tr
+                        key={building.id}
+                        className="border-t border-gray-200 hover:bg-[#F7F8F6]"
+                      >
+                        <td className="whitespace-nowrap px-5 py-5 font-semibold text-black">
+                          {building.address}
+                        </td>
+
+                        <td className="px-5 py-5 text-sm text-gray-700">
+                          {building.borough}
+                        </td>
+
+                        <td className="px-5 py-5 text-sm text-gray-700">
+                          {building.bin}
+                        </td>
+
+                        <td className="px-5 py-5 text-sm text-gray-700">
+                          {building.bbl}
+                        </td>
+
+                        <td className="whitespace-nowrap px-5 py-5 text-sm text-gray-700">
+                          {building.emissions.toLocaleString()} tCO₂e
+                        </td>
+
+                        <td className="px-5 py-5">
+                          <span
+                            className={`inline-block whitespace-nowrap px-3 py-1 text-xs font-bold ${getStatusStyle(
+                              building.status,
+                            )}`}
+                          >
+                            {building.status}
+                          </span>
+                        </td>
+
+                        <td className="whitespace-nowrap px-5 py-5 text-right">
+                          <Link
+                            to={`/buildings/${building.id}`}
+                            className="text-sm font-bold text-[#0068A8] hover:underline"
+                          >
+                            View Building →
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {filteredBuildings.length === 0 && (
+                <div className="mt-5 border border-gray-300 px-6 py-12 text-center">
+                  <p className="font-bold text-black">No buildings found</p>
+
+                  <p className="mt-2 text-sm text-gray-600">
+                    Try changing your search or filter options.
+                  </p>
+                </div>
+              )}
+            </>
           )}
 
           <p className="mt-4 text-xs leading-5 text-gray-500">

@@ -1,26 +1,79 @@
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
-import { getBuildingById } from '../data/mockBuildings'
+import { getBuilding } from '../services/buildingService'
 
 function BuildingDetail() {
   const { id } = useParams()
 
-  const building = getBuildingById(id)
+  const [building, setBuilding] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  if (!building) {
+  useEffect(() => {
+    async function loadBuilding() {
+      try {
+        setLoading(true)
+        setError('')
+
+        const data = await getBuilding(id)
+
+        if (!data) {
+          setError('The requested building could not be found.')
+          return
+        }
+
+        setBuilding(data)
+      } catch {
+        setError('Unable to load building information.')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadBuilding()
+  }, [id])
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-white text-black">
         <Navbar />
 
-        <main className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16">
+        <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+          <p className="text-sm font-bold uppercase tracking-wider text-[#0068A8]">
+            Building Overview
+          </p>
+
+          <h1 className="mt-2 text-3xl font-bold">
+            Loading building...
+          </h1>
+
+          <p className="mt-3 text-gray-600">
+            Retrieving building information.
+          </p>
+        </main>
+
+        <Footer />
+      </div>
+    )
+  }
+
+  if (error || !building) {
+    return (
+      <div className="min-h-screen bg-white text-black">
+        <Navbar />
+
+        <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
           <p className="text-sm font-bold uppercase tracking-wider text-[#0068A8]">
             Building Not Found
           </p>
 
           <h1 className="mt-2 text-3xl font-bold sm:text-4xl">
-            We could not find this building.
+            We could not load this building.
           </h1>
+
+          <p className="mt-3 text-gray-600">{error}</p>
 
           <Link
             to="/buildings"
@@ -114,7 +167,6 @@ function BuildingDetail() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
-          {/* Summary Cards */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
             <div className="border border-gray-300 p-5">
               <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
@@ -157,7 +209,6 @@ function BuildingDetail() {
             </div>
           </div>
 
-          {/* Compliance Gap */}
           <div className="mt-8 border-l-4 border-[#006B3C] bg-[#F7F8F6] p-5 sm:mt-10 sm:p-6">
             <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
               Compliance Gap
@@ -212,7 +263,6 @@ function BuildingDetail() {
             </div>
           </div>
 
-          {/* Compliance Panels */}
           <div className="mt-8 grid gap-6 lg:mt-10 lg:grid-cols-2 lg:gap-8">
             <div className="border border-gray-300 p-5 sm:p-6">
               <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
@@ -225,7 +275,9 @@ function BuildingDetail() {
 
               <div className="mt-6 space-y-5">
                 <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-gray-600">Current emissions</span>
+                  <span className="text-gray-600">
+                    Current emissions
+                  </span>
 
                   <span className="font-bold">
                     {building.emissions.toLocaleString()} tCO₂e
@@ -233,7 +285,9 @@ function BuildingDetail() {
                 </div>
 
                 <div className="flex flex-col gap-1 border-b border-gray-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-gray-600">Applicable limit</span>
+                  <span className="text-gray-600">
+                    Applicable limit
+                  </span>
 
                   <span className="font-bold">
                     {building.limit.toLocaleString()} tCO₂e
@@ -257,9 +311,13 @@ function BuildingDetail() {
                 </div>
 
                 <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-gray-600">Compliance status</span>
+                  <span className="text-gray-600">
+                    Compliance status
+                  </span>
 
-                  <span className="font-bold">{building.status}</span>
+                  <span className="font-bold">
+                    {building.status}
+                  </span>
                 </div>
               </div>
             </div>
@@ -301,7 +359,9 @@ function BuildingDetail() {
                 </div>
 
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <span className="text-gray-600">Projected status</span>
+                  <span className="text-gray-600">
+                    Projected status
+                  </span>
 
                   <span
                     className={`w-fit px-3 py-1 text-xs font-bold ${projectedStatusStyle}`}
@@ -313,7 +373,6 @@ function BuildingDetail() {
             </div>
           </div>
 
-          {/* Emissions Trend */}
           <div className="mt-8 border border-gray-300 p-5 sm:mt-10 sm:p-6">
             <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
               Emissions Trend
@@ -367,7 +426,6 @@ function BuildingDetail() {
             </div>
           </div>
 
-          {/* Retrofit Recommendations */}
           <div className="mt-8 border border-gray-300 p-5 sm:mt-10 sm:p-6">
             <p className="text-sm font-bold uppercase tracking-wide text-[#0068A8]">
               Retrofit Planning
